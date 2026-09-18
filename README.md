@@ -182,6 +182,12 @@ php artisan vendor:publish --tag=content-studio-views
 php artisan vendor:publish --tag=content-studio-lang
 ```
 
+**Dark mode:** the views ship `dark:` variants, so a site that is always light and leaves Tailwind on its default strategy gets a dark blog whenever the visitor's system is dark. Switch Tailwind to the class-based variant to prevent that:
+
+```css
+@custom-variant dark (&:where(.dark, .dark *));
+```
+
 ## Tests
 
 ```bash
