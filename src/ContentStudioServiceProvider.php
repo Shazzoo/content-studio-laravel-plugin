@@ -5,6 +5,7 @@ namespace Shazzoo\ContentStudio;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Shazzoo\ContentStudio\Console\ClearArticlesCommand;
 use Shazzoo\ContentStudio\Console\SyncArticlesCommand;
 use Shazzoo\ContentStudio\Http\Controllers\ArticleController;
 use Shazzoo\ContentStudio\Http\Controllers\SitemapController;
@@ -30,7 +31,7 @@ class ContentStudioServiceProvider extends ServiceProvider
         }
 
         if ($this->app->runningInConsole()) {
-            $this->commands([SyncArticlesCommand::class]);
+            $this->commands([SyncArticlesCommand::class, ClearArticlesCommand::class]);
 
             $this->publishes([
                 $base.'/config/content-studio.php' => config_path('content-studio.php'),

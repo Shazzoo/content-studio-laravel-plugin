@@ -58,6 +58,16 @@ php artisan content-studio:sync
 php artisan content-studio:sync --status=all   # also fetch articles that are already live
 ```
 
+To delete every synced article, for example to re-sync from scratch:
+
+```bash
+php artisan content-studio:clear            # asks for confirmation
+php artisan content-studio:clear --force    # deletes straight away
+php artisan content-studio:clear --images   # also deletes the downloaded images
+```
+
+Without `--images` the images stay in storage, so a following `--status=all` sync does not download them again.
+
 An article whose images cannot be downloaded is not stored at all, so the site never shows a half-finished article; an article that is already live keeps the version it has. The command exits with an error, the article stays unconfirmed in the Engine's `approved` list, and the next sync downloads the images again. Images that did come through stay on disk, so a retry only fetches what is missing.
 
 ## Routes
