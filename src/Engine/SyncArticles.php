@@ -158,7 +158,7 @@ class SyncArticles
             return false;
         }
 
-        if (app()->environment('production')) {
+        if (config('content-studio.confirm_published')) {
             $this->confirmPublished($article);
         }
 

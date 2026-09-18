@@ -12,6 +12,11 @@ return [
     // your own locale group. See "Multiple languages" in the README.
     'register_routes' => (bool) env('CONTENT_STUDIO_ROUTES', true),
 
+    // Report synced articles to the Engine as published, which takes them out
+    // of its "approved" list. Turn this off on a site that syncs the real
+    // project without being the live site, such as local or staging.
+    'confirm_published' => (bool) env('CONTENT_STUDIO_CONFIRM_PUBLISHED', true),
+
     'articles_per_page' => (int) env('CONTENT_STUDIO_ARTICLES_PER_PAGE', 12),
 
     // Blade layout the blog pages extend. The layout must yield "content"

@@ -65,9 +65,7 @@ it('fails when the engine returns an error', function () {
     $this->artisan('content-studio:sync')->assertFailed();
 });
 
-it('confirms publication in production', function () {
-    app()->detectEnvironment(fn () => 'production');
-
+it('confirms publication', function () {
     Http::fake([
         '*/projects/PRJ' => Http::response(['data' => []]),
         '*/contents?status=approved' => Http::response(['data' => [engineItem(['featured_image_url' => null])], 'links' => ['next' => null]]),
@@ -124,8 +122,6 @@ it('does not store a new article when the image connection times out', function 
 });
 
 it('does not store or confirm an article with a failing image, and retries next sync', function () {
-    app()->detectEnvironment(fn () => 'production');
-
     $imageResponse = fn () => Http::response('nope', 500);
 
     Http::fake([
@@ -173,4 +169,31 @@ it('empties the image when the engine no longer sends one', function () {
     $this->artisan('content-studio:sync')->assertSuccessful();
 
     expect(Article::first()->featured_image_url)->toBeNull();
+});
+
+it('confirms publication by default', function () {
+
+    Http::fake([
+        '*/projects/PRJ' => Http::response(['data' => []]),
+        '*/contents*' => Http::response(['data' => [engineItem(['featured_image_url' => null])], 'links' => ['next' => null]]),
+        '*/confirm-published' => Http::response(['ok' => true]),
+    ]);
+
+    $this->artisan('content-studio:sync')->assertSuccessful();
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'confirm-published'));
+});
+
+it('does not confirm publication when the config turns it off', function () {
+    config(['content-studio.confirm_published' => false]);
+
+    Http::fake([
+        '*/projects/PRJ' => Http::response(['data' => []]),
+        '*/contents*' => Http::response(['data' => [engineItem(['featured_image_url' => null])], 'links' => ['next' => null]]),
+    ]);
+
+    $this->artisan('content-studio:sync')->assertSuccessful();
+
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'confirm-published'));
+    expect(Article::first()->published_confirmed_at)->toBeNull();
 });

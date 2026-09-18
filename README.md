@@ -51,6 +51,12 @@ CONTENT_STUDIO_ROUTE=blog
 CONTENT_STUDIO_ARTICLES_PER_PAGE=12
 ```
 
+After storing an article, the sync reports it to the Engine as published, which takes it out of the Engine's `approved` list. Turn that off on a site that syncs the real project without being the live site, such as local or staging:
+
+```dotenv
+CONTENT_STUDIO_CONFIRM_PUBLISHED=false
+```
+
 The sync runs through the Laravel scheduler, so make sure `php artisan schedule:run` runs every minute. To sync right away:
 
 ```bash
