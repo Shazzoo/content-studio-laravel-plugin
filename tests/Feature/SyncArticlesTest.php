@@ -239,6 +239,54 @@ it('moves the images and the links in the text over when the disk changes', func
     expect(Article::first()->body_html)->toContain('src="https://cdn.test/content_studio_images/1/diagrams/');
 });
 
+it('stores the images as public on a disk that defaults to private', function () {
+    config(['content-studio.disk' => 'cdn']);
+    Storage::fake('cdn', ['url' => 'https://cdn.test', 'visibility' => 'private']);
+
+    Http::fake([
+        '*/projects/PRJ' => Http::response(['data' => []]),
+        '*/contents*' => Http::response(['data' => [engineItemWithDiagram()], 'links' => ['next' => null]]),
+        '*/confirm-published' => Http::response(['ok' => true]),
+        'engine.test/*' => Http::response('image-bytes'),
+    ]);
+
+    $this->artisan('content-studio:sync')->assertSuccessful();
+
+    $files = Storage::disk('cdn')->allFiles('content_studio_images');
+
+    expect($files)->toHaveCount(2);
+    foreach ($files as $file) {
+        expect(Storage::disk('cdn')->getVisibility($file))->toBe('public');
+    }
+});
+
+it('makes images that are already on the disk but private public', function () {
+    config(['content-studio.disk' => 'cdn']);
+    Storage::fake('cdn', ['url' => 'https://cdn.test']);
+
+    Http::fake([
+        '*/projects/PRJ' => Http::response(['data' => []]),
+        '*/contents*' => Http::response(['data' => [engineItemWithDiagram()], 'links' => ['next' => null]]),
+        '*/confirm-published' => Http::response(['ok' => true]),
+        'engine.test/*' => Http::response('image-bytes'),
+    ]);
+
+    $this->artisan('content-studio:sync')->assertSuccessful();
+
+    // Copied into the bucket by hand, without making them public.
+    $files = Storage::disk('cdn')->allFiles('content_studio_images');
+    foreach ($files as $file) {
+        Storage::disk('cdn')->setVisibility($file, 'private');
+    }
+
+    $this->artisan('content-studio:sync', ['--status' => 'all'])->assertSuccessful();
+
+    expect($files)->toHaveCount(2);
+    foreach ($files as $file) {
+        expect(Storage::disk('cdn')->getVisibility($file))->toBe('public');
+    }
+});
+
 function engineItemWithDiagram(): array
 {
     $id = '355f5250-3e28-435d-9a53-1d934c21a52f';

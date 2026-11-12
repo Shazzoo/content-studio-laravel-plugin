@@ -251,7 +251,7 @@ class SyncArticles
         $filename = pathinfo($path, PATHINFO_FILENAME) ?: (string) $contentId;
         $uploadPath = "content_studio_images/{$contentId}/{$filename}.{$extension}";
 
-        if (ContentStudio::disk()->exists($uploadPath)) {
+        if ($this->alreadyStored($uploadPath)) {
             return $uploadPath;
         }
 
@@ -271,9 +271,36 @@ class SyncArticles
             return null;
         }
 
-        ContentStudio::disk()->put($uploadPath, $response->body());
+        ContentStudio::disk()->put($uploadPath, $response->body(), 'public');
 
         return $uploadPath;
+    }
+
+    /**
+     * Whether the image is already on the disk, and if so, makes it public.
+     * The pages link to the images directly, but a file copied into a bucket
+     * by hand is private unless someone says otherwise, and the visitor then
+     * gets a 403 instead of the image.
+     */
+    private function alreadyStored(string $path): bool
+    {
+        $disk = ContentStudio::disk();
+
+        if (! $disk->exists($path)) {
+            return false;
+        }
+
+        try {
+            $public = $disk->setVisibility($path, 'public');
+        } catch (\Throwable $e) {
+            $public = false;
+        }
+
+        if (! $public) {
+            Log::warning('[ContentStudio] Could not make an existing image public', ['path' => $path]);
+        }
+
+        return true;
     }
 
     private function storePlaceholderImage(string $imageUrl, mixed $contentId, ?string $placeholderId, string $type): string
@@ -297,7 +324,7 @@ class SyncArticles
         if ($extension !== null) {
             $path = "content_studio_images/{$directory}/{$folder}s/{$filename}.{$extension}";
 
-            if (ContentStudio::disk()->exists($path)) {
+            if ($this->alreadyStored($path)) {
                 return ContentStudio::disk()->url($path);
             }
         }
@@ -321,7 +348,9 @@ class SyncArticles
         $extension ??= $this->extensionFromContentType($response->header('Content-Type'));
         $path = "content_studio_images/{$directory}/{$folder}s/{$filename}.{$extension}";
 
-        ContentStudio::disk()->put($path, $response->body());
+        // Public whatever the disk's default: on an S3 disk without a
+        // visibility setting the upload would otherwise be private.
+        ContentStudio::disk()->put($path, $response->body(), 'public');
 
         return ContentStudio::disk()->url($path);
     }
