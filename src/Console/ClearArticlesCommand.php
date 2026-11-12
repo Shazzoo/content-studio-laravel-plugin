@@ -3,7 +3,7 @@
 namespace Shazzoo\ContentStudio\Console;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
+use Shazzoo\ContentStudio\ContentStudio;
 use Shazzoo\ContentStudio\Models\Article;
 
 class ClearArticlesCommand extends Command
@@ -39,7 +39,7 @@ class ClearArticlesCommand extends Command
         Article::query()->delete();
 
         if ($images) {
-            Storage::disk('public')->deleteDirectory(self::IMAGE_DIRECTORY);
+            ContentStudio::disk()->deleteDirectory(self::IMAGE_DIRECTORY);
             $this->info("Deleted {$count} articles and their images. A new sync downloads the images again.");
 
             return self::SUCCESS;

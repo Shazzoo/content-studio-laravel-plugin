@@ -5,7 +5,6 @@ namespace Shazzoo\ContentStudio\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Shazzoo\ContentStudio\ContentStudio;
 
@@ -62,7 +61,7 @@ class Article extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->featured_image_url);
+        return ContentStudio::disk()->url($this->featured_image_url);
     }
 
     /** Excerpt from the Engine, or else a shortened version of the body. */

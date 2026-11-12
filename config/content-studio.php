@@ -17,6 +17,11 @@ return [
     // project without being the live site, such as local or staging.
     'confirm_published' => (bool) env('CONTENT_STUDIO_CONFIRM_PUBLISHED', true),
 
+    // The filesystem disk the images from the Engine are stored on, and
+    // served from. Any disk with public URLs works, such as an S3 bucket
+    // behind a CDN.
+    'disk' => env('CONTENT_STUDIO_DISK', 'public'),
+
     'articles_per_page' => (int) env('CONTENT_STUDIO_ARTICLES_PER_PAGE', 12),
 
     // Blade layout the blog pages extend. The layout must yield "content"

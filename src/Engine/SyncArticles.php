@@ -5,8 +5,8 @@ namespace Shazzoo\ContentStudio\Engine;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Shazzoo\ContentStudio\ContentStudio;
 use Shazzoo\ContentStudio\Models\Article;
 use Shazzoo\ContentStudio\Support\ArticleImagePlaceholders;
 
@@ -251,7 +251,7 @@ class SyncArticles
         $filename = pathinfo($path, PATHINFO_FILENAME) ?: (string) $contentId;
         $uploadPath = "content_studio_images/{$contentId}/{$filename}.{$extension}";
 
-        if (Storage::disk('public')->exists($uploadPath)) {
+        if (ContentStudio::disk()->exists($uploadPath)) {
             return $uploadPath;
         }
 
@@ -271,7 +271,7 @@ class SyncArticles
             return null;
         }
 
-        Storage::disk('public')->put($uploadPath, $response->body());
+        ContentStudio::disk()->put($uploadPath, $response->body());
 
         return $uploadPath;
     }
@@ -297,8 +297,8 @@ class SyncArticles
         if ($extension !== null) {
             $path = "content_studio_images/{$directory}/{$folder}s/{$filename}.{$extension}";
 
-            if (Storage::disk('public')->exists($path)) {
-                return Storage::disk('public')->url($path);
+            if (ContentStudio::disk()->exists($path)) {
+                return ContentStudio::disk()->url($path);
             }
         }
 
@@ -321,9 +321,9 @@ class SyncArticles
         $extension ??= $this->extensionFromContentType($response->header('Content-Type'));
         $path = "content_studio_images/{$directory}/{$folder}s/{$filename}.{$extension}";
 
-        Storage::disk('public')->put($path, $response->body());
+        ContentStudio::disk()->put($path, $response->body());
 
-        return Storage::disk('public')->url($path);
+        return ContentStudio::disk()->url($path);
     }
 
     private function extensionFromUrl(string $url): ?string

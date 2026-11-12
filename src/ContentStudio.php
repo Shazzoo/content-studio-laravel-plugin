@@ -3,6 +3,8 @@
 namespace Shazzoo\ContentStudio;
 
 use Closure;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Storage;
 use Shazzoo\ContentStudio\Engine\ProjectInfo;
 use Shazzoo\ContentStudio\Models\Article;
 use Shazzoo\ContentStudio\Support\ArticleRoutes;
@@ -44,6 +46,12 @@ class ContentStudio
         }
 
         return app(ProjectInfo::class)->primaryLocale() ?: app()->getLocale();
+    }
+
+    /** The disk the downloaded images are stored on and served from. */
+    public static function disk(): Filesystem
+    {
+        return Storage::disk(config('content-studio.disk', 'public'));
     }
 
     public static function url(Article $article): string

@@ -91,3 +91,13 @@ it('mentions the images in the confirmation', function () {
     expect(Article::count())->toBe(1);
     Storage::disk('public')->assertExists('content_studio_images/1/hero.jpg');
 });
+
+it('deletes the images from the configured disk', function () {
+    config(['content-studio.disk' => 'cdn']);
+    Storage::fake('cdn');
+    Storage::disk('cdn')->put('content_studio_images/1/hero.jpg', 'bytes');
+
+    $this->artisan('content-studio:clear', ['--images' => true, '--force' => true])->assertSuccessful();
+
+    Storage::disk('cdn')->assertMissing('content_studio_images/1/hero.jpg');
+});

@@ -197,3 +197,59 @@ it('does not confirm publication when the config turns it off', function () {
     Http::assertNotSent(fn ($request) => str_contains($request->url(), 'confirm-published'));
     expect(Article::first()->published_confirmed_at)->toBeNull();
 });
+
+it('stores the images on the configured disk and links to it', function () {
+    config(['content-studio.disk' => 'cdn']);
+    Storage::fake('cdn', ['url' => 'https://cdn.test']);
+
+    Http::fake([
+        '*/projects/PRJ' => Http::response(['data' => []]),
+        '*/contents*' => Http::response(['data' => [engineItemWithDiagram()], 'links' => ['next' => null]]),
+        '*/confirm-published' => Http::response(['ok' => true]),
+        'engine.test/*' => Http::response('image-bytes'),
+    ]);
+
+    $this->artisan('content-studio:sync')->assertSuccessful();
+
+    $article = Article::first();
+
+    Storage::disk('cdn')->assertExists('content_studio_images/1/hero.jpg');
+    Storage::disk('public')->assertMissing('content_studio_images/1/hero.jpg');
+    expect($article->imageUrl())->toBe('https://cdn.test/content_studio_images/1/hero.jpg')
+        ->and($article->body_html)->toContain('src="https://cdn.test/content_studio_images/1/diagrams/');
+});
+
+it('moves the images and the links in the text over when the disk changes', function () {
+    Storage::fake('cdn', ['url' => 'https://cdn.test']);
+
+    Http::fake([
+        '*/projects/PRJ' => Http::response(['data' => []]),
+        '*/contents*' => Http::response(['data' => [engineItemWithDiagram()], 'links' => ['next' => null]]),
+        '*/confirm-published' => Http::response(['ok' => true]),
+        'engine.test/*' => Http::response('image-bytes'),
+    ]);
+
+    $this->artisan('content-studio:sync')->assertSuccessful();
+    expect(Article::first()->body_html)->not->toContain('https://cdn.test');
+
+    config(['content-studio.disk' => 'cdn']);
+    $this->artisan('content-studio:sync', ['--status' => 'all'])->assertSuccessful();
+
+    Storage::disk('cdn')->assertExists('content_studio_images/1/hero.jpg');
+    expect(Article::first()->body_html)->toContain('src="https://cdn.test/content_studio_images/1/diagrams/');
+});
+
+function engineItemWithDiagram(): array
+{
+    $id = '355f5250-3e28-435d-9a53-1d934c21a52f';
+
+    return engineItem([
+        'body_html' => "<p>Hallo</p><!--diagram-placeholder:{$id}-->",
+        'image_placeholders' => [[
+            'type' => 'diagram',
+            'placeholder' => "<!--diagram-placeholder:{$id}-->",
+            'image_url' => 'https://engine.test/diagram.png',
+            'alt' => 'Schema',
+        ]],
+    ]);
+}

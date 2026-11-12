@@ -16,6 +16,14 @@ The images from the Engine are stored on the `public` disk, so the site needs th
 php artisan storage:link
 ```
 
+To store them on another disk, such as an S3 bucket behind a CDN, name it in `.env`. The disk needs public URLs, because the pages link to the images directly:
+
+```dotenv
+CONTENT_STUDIO_DISK=spaces
+```
+
+The text of an article holds the full URLs of its images. After changing the disk, run `php artisan content-studio:sync --status=all` once: it stores every image on the new disk and rewrites the articles to point there.
+
 The publish command copies the tracking script to `public/vendor/content-studio/tracking.js`. Without it the article pages ask for a file that isn't there and nothing is tracked.
 
 ### Keeping the script up to date
